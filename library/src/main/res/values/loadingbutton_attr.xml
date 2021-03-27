@@ -3,35 +3,30 @@
     <declare-styleable name="LoadingButton">
         <attr name="android:minWidth" format="dimension" />
         <attr name="text" format="string" />
+        <attr name="textSize" format="dimension" />
+        <attr name="textColor" format="color" />
+        <attr name="cornerRadius" format="dimension" />
         <attr name="loadingText" format="string" />
         <attr name="successText" format="string" />
         <attr name="errorText" format="string" />
-        <attr name="textColor" format="color" />
-        <attr name="boldText" format="boolean" />
-        <attr name="textSize" format="dimension" />
-        <attr name="cornerRadius" format="dimension" />
         <attr name="progressColor" format="color" />
         <attr name="backgroundTint" format="color" />
-        <attr name="successBackground" format="color" />
-        <attr name="errorBackground" format="color" />
+        <attr name="successBackgroundTint" format="color" />
+        <attr name="errorBackgroundTint" format="color" />
         <attr name="restoreTimeMillis" format="integer" />
         <attr name="successIcon" format="reference" />
-        <attr name="errorIcon" format="reference" />
         <attr name="elevation" format="dimension" />
-        <attr name="customFontFamily" format="reference" />
+        <attr name="progressBarSize" format="dimension"/>
         <attr name="progressGravity" format="enum">
             <enum name="start" value="0" />
             <enum name="center" value="1" />
             <enum name="end" value="2" />
         </attr>
-
-        <attr name="progressBarSize" format="dimension"/>
-
-       <!-- <attr name="progressBarSize" format="enum">
-            <enum name="large" value="64" />
-            <enum name="medium" value="48" />
-            <enum name="small" value="18" />
-        </attr>-->
+        <attr name="progressPadding" format="enum">
+            <enum name="none" value="0" />
+            <enum name="onlyProgress" value="1" />
+            <enum name="both" value="2" />
+        </attr>
     </declare-styleable>
 
 </resources>

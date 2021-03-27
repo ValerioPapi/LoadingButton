@@ -4,12 +4,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="16dp"
     android:clipChildren="false"
     android:clipToPadding="false"
+    android:paddingTop="16dp"
     tools:context=".MainActivity">
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/normal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -18,17 +18,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="loading"
-        app:cornerRadius="20dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/normal"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/success"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -38,7 +37,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/normal" />
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/error"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -51,16 +50,18 @@
         android:id="@+id/loadingButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:text="Questo è un testo"
-        app:loadingText="Caricamento..."
-        app:errorText="Errore nello scaricamento"
-        app:successText="Salvato"
-        app:restoreTimeMillis="1400"
-        app:progressGravity="end"
-        app:cornerRadius="32dp"
+        app:backgroundTint="@color/purple_700"
+        app:errorText="Error"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:loadingText="Loading..."
+        app:progressGravity="end"
+        app:progressPadding="onlyProgress"
+        app:restoreTimeMillis="1800"
+        app:successText="Saved"
+        app:text="Click"
+        app:textColor="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

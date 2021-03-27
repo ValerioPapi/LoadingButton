@@ -1,6 +1,7 @@
 package com.valeriopapi.loadingbutton
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
@@ -11,9 +12,12 @@ import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.ProgressBar
 import androidx.annotation.ColorInt
+import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import com.google.android.material.button.MaterialButton
+import com.valeriopapi.loadingbutton.enums.ProgressGravity
+import com.valeriopapi.loadingbutton.enums.ProgressPadding
 
 
 class LoadingButton @JvmOverloads constructor(
@@ -39,13 +43,16 @@ class LoadingButton @JvmOverloads constructor(
     @ColorInt
     private var errorBackground = Color.RED
 
-    private var gravityProgress = GravityProgress.CENTER
+    private var progressGravity = ProgressGravity.CENTER
+    private var progressPadding = ProgressPadding.ONLY_PROGRESS
     private var isLoading = false
     private var restoreTimeMillis: Int? = null
     private var progressBarSize: Float = 0f
 
     private val bHPadding: Int by lazy { dpToPx(12) }
     private val bVPadding: Int by lazy { dpToPx(4) }
+
+    private var mHandler: Handler? = null
 
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.loading_button_layout, this, true)
@@ -65,17 +72,18 @@ class LoadingButton @JvmOverloads constructor(
             arr.getColor(R.styleable.LoadingButton_backgroundTint, backgroundTint)
         this.successBackground =
             arr.getColor(
-                R.styleable.LoadingButton_successBackground,
+                R.styleable.LoadingButton_successBackgroundTint,
                 ContextCompat.getColor(context, R.color.successColor)
             )
         this.errorBackground =
             arr.getColor(
-                R.styleable.LoadingButton_errorBackground,
+                R.styleable.LoadingButton_errorBackgroundTint,
                 ContextCompat.getColor(context, R.color.errorColor)
             )
         val minWidth = arr.getDimension(R.styleable.LoadingButton_android_minWidth, 0f)
 
         val progressGravity: Int = arr.getInteger(R.styleable.LoadingButton_progressGravity, -1)
+        val progressPadding: Int = arr.getInteger(R.styleable.LoadingButton_progressPadding, -1)
 
         val cornerRadius =
             arr.getDimension(R.styleable.LoadingButton_cornerRadius, dpToPx(4).toFloat())
@@ -83,18 +91,32 @@ class LoadingButton @JvmOverloads constructor(
         this.progressBarSize =
             arr.getDimension(R.styleable.LoadingButton_progressBarSize, dpToPx(24).toFloat())
 
+        val progressColor = arr.getColor(
+            R.styleable.LoadingButton_progressColor,
+            Color.WHITE
+        )
+
+        val textColor: Int? = if (arr.hasValue(R.styleable.LoadingButton_textColor)) {
+            arr.getColor(R.styleable.LoadingButton_textColor, Color.WHITE)
+        } else {
+            null
+        }
+
         restoreTimeMillis =
             arr.getInteger(R.styleable.LoadingButton_restoreTimeMillis, -1).checkPositiveOrNull()
         arr.recycle()
 
         buttonTextView.minWidth = minWidth.toInt()
         buttonTextView.cornerRadius = cornerRadius.toInt()
-        setGravity(GravityProgress.fromAttrValue(progressGravity) ?: gravityProgress)
+        setGravity(ProgressGravity.fromAttrValue(progressGravity) ?: this.progressGravity)
+        setProgressPadding(ProgressPadding.fromAttrValue(progressPadding) ?: this.progressPadding)
         setProgressSize(progressBarSize.toInt())
         setText(text)
         ViewCompat.setElevation(buttonTextView, elevation)
         buttonTextView.setBackgroundColor(backgroundTint)
+        textColor?.let { setTextColor(it) }
 
+        progressBar.indeterminateTintList = ColorStateList.valueOf(progressColor);
         progressBar.background = drawCircle(backgroundTint)
 
         setIsLoading(false)
@@ -108,23 +130,31 @@ class LoadingButton @JvmOverloads constructor(
         }
     }
 
-    fun drawCircle(backgroundColor: Int): GradientDrawable {
+    private fun drawCircle(backgroundColor: Int): GradientDrawable {
         val shape = GradientDrawable()
         shape.shape = GradientDrawable.OVAL
         shape.setColor(backgroundColor)
         return shape
     }
 
-    fun setGravity(gravityProgress: GravityProgress) {
-        this.gravityProgress = gravityProgress
+    fun setGravity(progressGravity: ProgressGravity) {
+        this.progressGravity = progressGravity
         (progressBar.layoutParams as LayoutParams).run {
-            this.gravity = Gravity.CENTER_VERTICAL or gravityProgress.gravity
+            this.gravity = Gravity.CENTER_VERTICAL or progressGravity.gravity
             progressBar.layoutParams = this
         }
     }
 
-    override fun setClickable(clickable: Boolean) {
-        super.setClickable(clickable)
+    fun setProgressPadding(progressPadding: ProgressPadding) {
+        this.progressPadding = progressPadding
+    }
+
+    fun setTextColor(@ColorInt color: Int) {
+        this.buttonTextView.setTextColor(color)
+    }
+
+    fun setTextColor(colors: ColorStateList) {
+        this.buttonTextView.setTextColor(colors)
     }
 
     private fun refresh() {
@@ -132,40 +162,66 @@ class LoadingButton @JvmOverloads constructor(
             buttonTextView.isClickable = false
             buttonTextView.icon = null
             buttonTextView.setBackgroundColor(backgroundTint)
-            when (gravityProgress) {
-                GravityProgress.START -> {
-                    buttonTextView.text = this.loadingText ?: this.text
-                    buttonTextView.setPadding(
-                        progressBarSize.toInt() + bHPadding,
-                        bVPadding,
-                        bHPadding,
-                        bVPadding
-                    )
-                }
-                GravityProgress.CENTER -> {
-                    buttonTextView.text = ""
-                }
-                GravityProgress.END -> {
-                    buttonTextView.text = this.loadingText ?: this.text
-                    buttonTextView.setPadding(
-                        bHPadding,
-                        bVPadding,
-                        progressBarSize.toInt() + bHPadding,
-                        bVPadding
-                    )
-                }
+            setPaddingProgress(progressGravity)
+            when (progressGravity) {
+                ProgressGravity.START -> buttonTextView.text = this.loadingText ?: this.text
+                ProgressGravity.CENTER -> buttonTextView.text = ""
+                ProgressGravity.END -> buttonTextView.text = this.loadingText ?: this.text
             }
             progressBar.show()
         } else {
             buttonTextView.isClickable = true
             buttonTextView.text = this.text
+            buttonTextView.icon = null
             buttonTextView.setPadding(bHPadding, bVPadding, bHPadding, bVPadding)
             progressBar.hide()
+            buttonTextView.setBackgroundColor(backgroundTint)
+            buttonTextView.requestLayout()
+        }
+    }
+
+    private fun setPaddingProgress(progressGravity: ProgressGravity) {
+        when (progressPadding) {
+            ProgressPadding.NONE -> buttonTextView.setPadding(
+                bHPadding,
+                bVPadding,
+                bHPadding,
+                bVPadding
+            )
+            ProgressPadding.ONLY_PROGRESS -> {
+                when (progressGravity) {
+                    ProgressGravity.START -> buttonTextView.setPadding(
+                        progressBarSize.toInt() + bHPadding,
+                        bVPadding,
+                        bHPadding,
+                        bVPadding
+                    )
+                    ProgressGravity.END -> buttonTextView.setPadding(
+                        bHPadding,
+                        bVPadding,
+                        progressBarSize.toInt() + bHPadding,
+                        bVPadding
+                    )
+                    ProgressGravity.CENTER -> buttonTextView.setPadding(
+                        bHPadding,
+                        bVPadding,
+                        bHPadding,
+                        bVPadding
+                    )
+                }
+            }
+            ProgressPadding.BOTH -> buttonTextView.setPadding(
+                progressBarSize.toInt() + bHPadding,
+                bVPadding,
+                progressBarSize.toInt() + bHPadding,
+                bVPadding
+            )
         }
     }
 
     fun setIsLoading(isLoading: Boolean) {
         this.isLoading = isLoading
+        mHandler?.removeCallbacksAndMessages(null)
         refresh()
     }
 
@@ -174,17 +230,13 @@ class LoadingButton @JvmOverloads constructor(
         refresh()
     }
 
-    fun getText(): CharSequence? {
-        return text
+    fun setText(@StringRes resid: Int) {
+        this.text = context.getString(resid)
+        refresh()
     }
 
-    fun setNormal() {
-        setIsLoading(false)
-        buttonTextView.icon = null
-        buttonTextView.text = this.text
-        buttonTextView.setBackgroundColor(backgroundTint)
-        buttonTextView.requestLayout()
-
+    fun getText(): CharSequence? {
+        return text
     }
 
     fun setSuccess(
@@ -227,8 +279,10 @@ class LoadingButton @JvmOverloads constructor(
     ) {
         val mResoreTime = restoreTimeMillis.checkPositiveOrNull() ?: this.restoreTimeMillis
         if (mResoreTime != null) {
-            Handler(Looper.getMainLooper()).postDelayed({
-                setNormal()
+            mHandler?.removeCallbacksAndMessages(null)
+            mHandler = Handler(Looper.getMainLooper())
+            mHandler?.postDelayed({
+                setIsLoading(false)
                 callback?.invoke()
             }, mResoreTime.toLong())
         }

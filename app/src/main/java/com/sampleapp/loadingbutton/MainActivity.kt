@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.normal -> {
-                loadingButton.setNormal()
+                loadingButton.setIsLoading(false)
             }
             R.id.loading -> {
                 loadingButton.setIsLoading(true)
