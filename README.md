@@ -26,7 +26,7 @@ Add the dependency :
 
 ```groovy
 dependencies {
-    implementation 'com.github.ValerioPapi:LoadingButton:{version}'
+    implementation 'com.github.ValerioPapi:LoadingButton:0.2.0'
 }
 ```
 
@@ -73,4 +73,3 @@ dependencies {
     See the License for the specific language governing permissions and
     limitations under the License.
 
----
